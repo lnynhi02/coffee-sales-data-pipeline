@@ -1,102 +1,140 @@
 services:
   kafka-1:
+    image: confluentinc/cp-enterprise-kafka:7.7.7
     container_name: kafka-1
-    image: 'bitnami/kafka:3.5.1'
     ports:
-      - '29092:29092'
+      - "19092:19092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_METRIC_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
+      CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: kafka-1:9092,kafka-2:9092,kafka-3:9092
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-1:29093,2@kafka-2:29093,3@kafka-3:29093
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,EXTERNAL://0.0.0.0:19092,CONTROLLER://0.0.0.0:29093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-1:9092,EXTERNAL://localhost:19092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      CLUSTER_ID: NkE2QzY3RkEwOTFDRkMzMg==
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_OPTS: -javaagent:/usr/share/jmx-exporter/jmx_prometheus_javaagent-0.20.0.jar=9300:/usr/share/jmx-exporter/kafka-broker.yml
+    volumes:
+      - ./docker_infra/jmx-exporter:/usr/share/jmx-exporter
+      - ./docker_volumes/kafka-1/data:/var/lib/kafka/data
     networks:
       - myNetwork
-    environment:
-      - KAFKA_CFG_NODE_ID=1
-      - KAFKA_CFG_PROCESS_ROLES=controller,broker
-      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:29092
-      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka-1:9092,EXTERNAL://localhost:29092
-      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT,PLAINTEXT:PLAINTEXT
-      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=1@kafka-1:9093,2@kafka-2:9093
-      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
-      - KAFKA_AUTO_CREATE_TOPICS_ENABLE=true
-      - KAFKA_KRAFT_CLUSTER_ID=k3Fk2HhXQwWL9rPlYxYOoA
-      - KAFKA_OPTS=-javaagent:/usr/share/jmx-exporter/jmx_prometheus_javaagent-0.20.0.jar=9300:/usr/share/jmx-exporter/kafka-broker.yml
-    volumes:
-      - ./volumes/kafka-1:/bitnami/kafka
-      - ./volumes/jmx-exporter:/usr/share/jmx-exporter
 
   kafka-2:
+    image: confluentinc/cp-enterprise-kafka:7.7.7
     container_name: kafka-2
-    image: 'bitnami/kafka:3.5.1'
     ports:
-      - "29093:29093"
+      - "19093:19093"
     environment:
-      - KAFKA_CFG_NODE_ID=2
-      - KAFKA_CFG_PROCESS_ROLES=controller,broker
-      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:29093
-      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka-2:9092,EXTERNAL://localhost:29093
-      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT,PLAINTEXT:PLAINTEXT
-      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=1@kafka-1:9093,2@kafka-2:9093
-      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
-      - KAFKA_AUTO_CREATE_TOPICS_ENABLE=true
-      - KAFKA_KRAFT_CLUSTER_ID=k3Fk2HhXQwWL9rPlYxYOoA
-      - KAFKA_OPTS=-javaagent:/usr/share/jmx-exporter/jmx_prometheus_javaagent-0.20.0.jar=9300:/usr/share/jmx-exporter/kafka-broker.yml
+      KAFKA_NODE_ID: 2
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_METRIC_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
+      CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: kafka-1:9092,kafka-2:9092,kafka-3:9092
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-1:29093,2@kafka-2:29093,3@kafka-3:29093
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,EXTERNAL://0.0.0.0:19093,CONTROLLER://0.0.0.0:29093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-2:9092,EXTERNAL://localhost:19093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      CLUSTER_ID: NkE2QzY3RkEwOTFDRkMzMg==
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_OPTS: -javaagent:/usr/share/jmx-exporter/jmx_prometheus_javaagent-0.20.0.jar=9300:/usr/share/jmx-exporter/kafka-broker.yml
     volumes:
-      - ./volumes/kafka-2:/bitnami/kafka
-      - ./volumes/jmx-exporter:/usr/share/jmx-exporter
+      - ./docker_infra/jmx-exporter:/usr/share/jmx-exporter
+      - ./docker_volumes/kafka-2/data:/var/lib/kafka/data
     networks:
       - myNetwork
 
-  init-kafka:
-    image: 'bitnami/kafka:3.5.1'
-    container_name: init-kafka
-    depends_on:
-      - kafka-1
-      - kafka-2
-    networks:
-      - myNetwork
-    entrypoint: ["/bin/bash", "-c"]
-    command: 
-      - |
-        echo "Waiting for Kafka to be ready..."
-        while ! kafka-topics.sh --bootstrap-server kafka-1:9092 --list; do
-          sleep 5
-        done
-
-        echo "🚀 Kafka is ready. Creating topics ...... 🚀"
-        kafka-topics.sh --create --if-not-exists --bootstrap-server kafka-1:9092 --partitions 1 --replication-factor 1 --config cleanup.policy=compact  --topic connect-configs
-        kafka-topics.sh --create --if-not-exists --bootstrap-server kafka-1:9092 --partitions 10 --replication-factor 2 --config cleanup.policy=compact  --topic connect-offsets
-        kafka-topics.sh --create --if-not-exists --bootstrap-server kafka-1:9092 --partitions 5 --replication-factor 2 --config cleanup.policy=compact  --topic connect-status
-        kafka-topics.sh --create --if-not-exists --bootstrap-server kafka-1:9092 --partitions 3 --replication-factor 2 --topic mysql.coffee_shop.order_details
-        kafka-topics.sh --create --if-not-exists --bootstrap-server kafka-1:9092 --partitions 2 --replication-factor 2 --topic mysql.coffee_shop.orders
-        kafka-topics.sh --create --if-not-exists --bootstrap-server kafka-1:9092 --partitions 2 --replication-factor 2 --topic order_ready_for_checking
-
-        echo '🚀 Topic created successfully! 🚀'
-        kafka-topics.sh --bootstrap-server kafka-1:9092 --list
-
-  kafka-ui:
-    container_name: kafka-ui
-    image: provectuslabs/kafka-ui:latest
+  kafka-3:
+    image: confluentinc/cp-enterprise-kafka:7.7.7
+    container_name: kafka-3
     ports:
-      - 8000:8080
+      - "19094:19094"
+    environment:
+      KAFKA_NODE_ID: 3
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_METRIC_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
+      CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: kafka-1:9092,kafka-2:9092,kafka-3:9092
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-1:29093,2@kafka-2:29093,3@kafka-3:29093
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,EXTERNAL://0.0.0.0:19094,CONTROLLER://0.0.0.0:29093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-3:9092,EXTERNAL://localhost:19094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      CLUSTER_ID: NkE2QzY3RkEwOTFDRkMzMg==
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_OPTS: -javaagent:/usr/share/jmx-exporter/jmx_prometheus_javaagent-0.20.0.jar=9300:/usr/share/jmx-exporter/kafka-broker.yml
+    volumes:
+      - ./docker_infra/jmx-exporter:/usr/share/jmx-exporter
+      - ./docker_volumes/kafka-3/data:/var/lib/kafka/data
+    networks:
+      - myNetwork
+
+  kafka-init:
+    image: confluentinc/cp-kafka:7.7.7
+    container_name: kafka-init
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      "
+      kafka-topics --bootstrap-server kafka-1:9092 --list
+
+      kafka-topics --create --if-not-exists --bootstrap-server kafka-1:9092 --partitions 1 --replication-factor 1 --config cleanup.policy=compact --topic connect-configs
+      kafka-topics --create --if-not-exists --bootstrap-server kafka-1:9092 --partitions 10 --replication-factor 2 --config cleanup.policy=compact --topic connect-offsets
+      kafka-topics --create --if-not-exists --bootstrap-server kafka-1:9092 --partitions 5 --replication-factor 2 --config cleanup.policy=compact --topic connect-status
+      kafka-topics --create --if-not-exists --bootstrap-server kafka-1:9092 --partitions 4 --replication-factor 3 --topic mysql.coffee_shop.order_details
+      kafka-topics --create --if-not-exists --bootstrap-server kafka-1:9092 --partitions 3 --replication-factor 3 --topic mysql.coffee_shop.orders
+      kafka-topics --create --if-not-exists --bootstrap-server kafka-1:9092 --partitions 2 --replication-factor 3 --topic order_ready_for_checking
+
+      kafka-topics --bootstrap-server kafka-1:9092 --list
+      "
     depends_on:
       - kafka-1
       - kafka-2
+      - kafka-3
     networks:
       - myNetwork
-    environment:
-      KAFKA_CLUSTERS_0_NAME: local
-      KAFKA_CLUSTERS_0_BOOTSTRAP_SERVERS: PLAINTEXT://kafka-1:9092
-      DYNAMIC_CONFIG_ENABLED: 'true'
+    
+  # schema-registry:
+  #   image: confluentinc/cp-schema-registry:7.7.7
+  #   container_name: schema-registry
+  #   depends_on:
+  #     - kafka-1
+  #     - kafka-2
+  #     - kafka-3
+  #   ports:
+  #     - "8081:8081"
+  #   environment:
+  #     SCHEMA_REGISTRY_HOST_NAME: schema-registry
+  #     SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: PLAINTEXT://kafka-1:9092,PLAINTEXT://kafka-2:9092,PLAINTEXT://kafka-3:9092
+  #     SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
+  #   networks:
+  #     - myNetwork
 
-  connect:
-    image: confluentinc/cp-kafka-connect:latest
-    hostname: connect
+  kafka-connect:
+    image: confluentinc/cp-kafka-connect:7.7.7
     container_name: kafka-connect
     depends_on:
       - kafka-1
       - kafka-2
+      - kafka-3
     ports:
       - "8083:8083"
     environment:
-      CONNECT_BOOTSTRAP_SERVERS: "kafka-1:9092,kafka-2:9092"
-      CONNECT_REST_ADVERTISED_HOST_NAME: "connect"
+      CONNECT_BOOTSTRAP_SERVERS: kafka-1:9092,kafka-2:9092,kafka-3:9092
+      CONNECT_REST_ADVERTISED_HOST_NAME: kafka-connect
       CONNECT_GROUP_ID: "connect-cluster"
       CONNECT_CONFIG_STORAGE_TOPIC: "connect-configs"
       CONNECT_OFFSET_STORAGE_TOPIC: "connect-offsets"
@@ -104,7 +142,7 @@ services:
       CONNECT_KEY_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
       CONNECT_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
       CONNECT_PLUGIN_PATH: "/usr/share/confluent-hub-components"
-      KAFKA_JMX_OPTS: -javaagent:/usr/share/jmx-exporter/jmx_prometheus_javaagent-0.20.0.jar=9300:/usr/share/jmx-exporter/kafka-connect.yml
+      KAFKA_OPTS: -javaagent:/usr/share/jmx-exporter/jmx_prometheus_javaagent-0.20.0.jar=9300:/usr/share/jmx-exporter/kafka-connect.yml
     command:
       - bash
       - -c
@@ -114,9 +152,46 @@ services:
           fi
           /etc/confluent/docker/run
     volumes:
-      - ./volumes/jmx-exporter:/usr/share/jmx-exporter/
-      - ./volumes/connector-plugins:/plugins
+      - ./docker_infra/jmx-exporter:/usr/share/jmx-exporter/
+      - ./docker_infra/kafka-connect:/config
     restart: always
+    networks:
+      - myNetwork
+
+  kafka-connect-init:
+    image: confluentinc/cp-kafka-connect:7.7.7
+    container_name: kafka-connect-init
+    depends_on:
+      - kafka-connect
+    volumes:
+      - ./docker_infra/kafka-connect:/config
+    entrypoint: ["/bin/sh", "/config/register.sh"]
+    networks:
+      - myNetwork
+
+  control-center:
+    image: confluentinc/cp-enterprise-control-center:7.7.7
+    container_name: control-center
+    depends_on:
+      - kafka-1
+      - kafka-2
+      - kafka-3
+      # - schema-registry
+      - kafka-connect
+    ports:
+      - "9021:9021"
+    environment:
+      CONTROL_CENTER_BOOTSTRAP_SERVERS: kafka-1:9092,kafka-2:9092,kafka-3:9092
+      CONTROL_CENTER_CONNECT_CONNECT-DEFAULT_CLUSTER: http://kafka-connect:8083
+      # CONTROL_CENTER_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+      CONTROL_CENTER_REPLICATION_FACTOR: 3
+      CONTROL_CENTER_INTERNAL_TOPICS_PARTITIONS: 1
+      CONTROL_CENTER_MONITORING_INTERCEPTOR_TOPIC_PARTITIONS: 1
+      CONTROL_CENTER_MONITORING_INTERCEPTOR_TOPIC_REPLICATION: 3
+      CONTROL_CENTER_PROMETHEUS_ENABLE: true
+      CONTROL_CENTER_PROMETHEUS_URL: http://prometheus:9090
+      CONTROL_CENTER_ALERTMANAGER_URL: http://alertmanager:9093
+      PORT: 9021
     networks:
       - myNetwork
 
@@ -127,44 +202,46 @@ services:
       - "6379:6379"
       - "8001:8001"
     volumes:
-      - ./volumes/redis:/data
+      - ./docker_volumes/redis:/data
     depends_on:
       - kafka-1
       - kafka-2 
+      - kafka-3
     networks:
       - myNetwork
 
-  prometheus:
-    image: prom/prometheus:v2.50.0
-    container_name: prometheus
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./volumes/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
-    networks:
-      - myNetwork
+  # prometheus:
+  #   image: prom/prometheus:latest
+  #   container_name: prometheus
+  #   ports:
+  #     - "9090:9090"
+  #   volumes:
+  #     - ./docker_infra/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+  #   networks:
+  #     - myNetwork
 
-  grafana:
-    image: grafana/grafana:latest
-    container_name: grafana
-    ports:
-      - "3000:3000"
-    environment:
-      - GF_SMTP_ENABLED=true
-      - GF_SMTP_HOST=smtp.gmail.com:587
-      - GF_SMTP_USER=${SMTP_USER}
-      - GF_SMTP_PASSWORD=${SMTP_PASSWORD}
-      - GF_SMTP_FROM_ADDRESS=${SMTP_FROM_ADDRESS}
-      - GF_SMTP_FROM_NAME=Grafana Alerts
-    volumes:
-      - ./volumes/grafana/data:/var/lib/grafana
-      - ./volumes/monitoring/grafana/provisioning:/etc/grafana/provisioning
-    depends_on:
-      - prometheus
-      - kafka-1
-      - kafka-2
-    networks:
-      - myNetwork
+  # grafana:
+  #   image: grafana/grafana:latest
+  #   container_name: grafana
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     - GF_SMTP_ENABLED=true
+  #     - GF_SMTP_HOST=smtp.gmail.com:587
+  #     - GF_SMTP_USER=${SMTP_USER}
+  #     - GF_SMTP_PASSWORD=${SMTP_PASSWORD}
+  #     - GF_SMTP_FROM_ADDRESS=${SMTP_FROM_ADDRESS}
+  #     - GF_SMTP_FROM_NAME=Grafana Alerts
+  #   volumes:
+  #     - ./docker_infra/grafana/data:/var/lib/grafana
+  #     - ./docker_infra/monitoring/grafana/provisioning:/etc/grafana/provisioning
+  #   depends_on:
+  #     - prometheus
+  #     - kafka-1
+  #     - kafka-2
+  #     - kafka-3
+  #   networks:
+  #     - myNetwork
 
 networks:
   myNetwork:

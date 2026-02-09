@@ -1,10 +1,11 @@
 x-spark-common: &spark-common
-  image: bitnami/spark:3.5.1
+  image: apache/spark:3.5.1
+  working_dir: /opt/spark/app
   ports:
     - "4040:4040"
   volumes:
-    - ./scripts/batch:/opt/bitnami/spark/scripts
-    - ./scripts/utils.py:/opt/bitnami/spark/scripts/utils.py
+    - ./src/batch:/opt/spark/app/src/batch
+    - ./src/utils:/opt/spark/app/src/utils
   networks:
     - myNetwork
 
@@ -12,29 +13,49 @@ x-airflow-common:
   &airflow-common
   build:
     context: .
-    dockerfile: ./airflow/Dockerfile
+    dockerfile: ./docker_infra/airflow/Dockerfile
+  working_dir: /home/airflow/app
   environment:
     &airflow-common-env
     TZ: Asia/Ho_Chi_Minh    # change to your local timezone
     AIRFLOW__CORE__EXECUTOR: LocalExecutor
-    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+    AIRFLOW__WEBSERVER__SECRET_KEY: b'\x08\x1f\xa1k\xcc}:\xff4\xf3\xe9|t\x7f\xf2\xdf'
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://postgres:postgres@postgres:5432/postgres
     AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
-    AIRFLOW__API__AUTH_BACKENDS: 'airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session'
+    AIRFLOW__CORE__AUTH_MANAGER: airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager
+    AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow@postgres/airflow
+    AIRFLOW__CORE__FERNET_KEY: ''
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
+    AIRFLOW__CORE__EXECUTION_API_SERVER_URL: http://airflow-apiserver:8080/execution/
+    AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: 'true'
+    # AIRFLOW__OPENLINEAGE__NAMESPACE: 'airflow_instance'
+    AIRFLOW_CONFIG: /opt/airflow/config/airflow.cfg
+    AIRFLOW__SMTP__EMAIL_BACKEND: 'airflow.utils.email.send_email_smtp'
+    AIRFLOW__SMTP__SMTP_HOST: 'smtp.gmail.com'
+    AIRFLOW__SMTP__SMTP_STARTTLS: 'true'
+    AIRFLOW__SMTP__SMTP_SSL: 'false'
+    AIRFLOW__SMTP__SMTP_USER: ${STMP_USER}
+    AIRFLOW__SMTP__SMTP_PORT: '587'
+    AIRFLOW__SMTP__SMTP_PASSWORD: ${STMP_PASSWORD}
+    AIRFLOW__SMTP__SMTP_MAIL_FROM: ${STMP_FROM_ADDRESS}
     MYSQL_HOST: 'host.docker.internal'
     MYSQL_USER: ${MYSQL_USER}
     MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     MYSQL_DATABASE: ${MYSQL_DATABASE}
+    PYTHONPATH: /home/airflow/
   volumes:
     - ./airflow/dags:/opt/airflow/dags
     - ./airflow/logs:/opt/airflow/logs
-    - ./scripts/batch:/opt/airflow/scripts
-    - ./scripts/utils.py:/opt/airflow/scripts/utils.py
-    - ./jars:/opt/airflow/jars
-    - ./logs:/opt/airflow/logger
-    - ./volumes/spark-cache/.ivy2:/home/airflow/.ivy2
+    - ./airflow/config:/opt/airflow/config
+    - ./src/batch:/home/airflow/app/src/batch
+    - ./src/utils:/home/airflow/app/src/utils
+    - ./logs:/home/airflow/app/logs
+    - ./docker_infra/spark/mysql-connector-j-8.0.33.jar:/home/airflow/app/jars/mysql-connector-j-8.0.33.jar
+    - ./docker_volumes/spark-cache/.ivy2:/home/airflow/.ivy2
   user: "${AIRFLOW_UID:-50000}:0"
-  depends_on:
-    - postgres
+  depends_on: &airflow-common-depends-on
+    postgres:
+      condition: service_healthy
   networks:
     - myNetwork
 
@@ -42,60 +63,220 @@ services:
   spark-master:
     <<: *spark-common
     container_name: spark-master
-    command: bin/spark-class org.apache.spark.deploy.master.Master
+    command: ["/opt/spark/bin/spark-class", "org.apache.spark.deploy.master.Master"]
     ports:
       - "9090:8080"
       - "7077:7077"
+    restart: always
     networks:
       - myNetwork
 
   spark-worker:
     <<: *spark-common
     container_name: spark-worker
-    command: bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
-    depends_on:
-      - spark-master
+    command: ["/opt/spark/bin/spark-class", "org.apache.spark.deploy.worker.Worker", "spark://spark-master:7077"]
     environment:
-      SPARK_MODE: worker
       SPARK_WORKER_CORES: 2
       SPARK_WORKER_MEMORY: 2g
       SPARK_MASTER_URL: spark://spark-master:7077
+    restart: always
+    depends_on:
+      - spark-master
     networks:
       - myNetwork
 
   postgres:
-    image: postgres:13
+    build:
+      context: .
+      dockerfile: ./docker_infra/postgres/Dockerfile
+    image: postgres:16
     container_name: postgres
     environment:
-      POSTGRES_USER: airflow
-      POSTGRES_PASSWORD: airflow
-      POSTGRES_DB: airflow
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
       POSTGRES_PORT: 5432
+    healthcheck:
+      test: [CMD, pg_isready, -U, airflow]
+      interval: 10s
+      retries: 5
+      start_period: 5s
     restart: always
     networks:
       - myNetwork
 
-  airflow-webserver:
+  airflow-apiserver:
     <<: *airflow-common
-    container_name: airflow-webserver
+    container_name: airflow-apiserver
+    command: api-server
+    ports: [8080:8080]
+    healthcheck:
+      test: [CMD, curl, --fail, http://localhost:8080/api/v2/version]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
     restart: always
-    command: webserver
-    ports:
-      - "8080:8080"
     depends_on:
-      - airflow-scheduler
-    networks:
-      - myNetwork
+      <<: *airflow-common-depends-on
+      airflow-init:
+        condition: service_completed_successfully
 
   airflow-scheduler:
     <<: *airflow-common
     container_name: airflow-scheduler
+    command: scheduler
+    healthcheck:
+      test: [CMD, curl, --fail, http://localhost:8974/health]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
     restart: always
-    command: >
-      bash -c "airflow db init && airflow users create --username airflow --password airflow --firstname Admin --lastname User --role Admin --email admin@example.com && airflow scheduler"
-    networks:
-      - myNetwork
+    depends_on:
+      <<: *airflow-common-depends-on
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-dag-processor:
+    <<: *airflow-common
+    container_name: airflow-dag-processor
+    command: dag-processor
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - airflow jobs check --job-type DagProcessorJob --hostname "$${HOSTNAME}"
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: always
+    depends_on:
+      <<: *airflow-common-depends-on
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-worker:
+    <<: *airflow-common
+    container_name: airflow-worker
+    command: celery worker
+    healthcheck:
+      # yamllint disable rule:line-length
+      test:
+        - CMD-SHELL
+        - celery --app airflow.providers.celery.executors.celery_executor.app inspect
+          ping -d "celery@$${HOSTNAME}" || celery --app airflow.executors.celery_executor.app
+          inspect ping -d "celery@$${HOSTNAME}"
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    environment:
+      <<: *airflow-common-env
+      # Required to handle warm shutdown of the celery workers properly
+      # See https://airflow.apache.org/docs/docker-stack/entrypoint.html#signal-propagation
+      DUMB_INIT_SETSID: '0'
+    restart: always
+    depends_on:
+      <<: *airflow-common-depends-on
+      airflow-apiserver:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
   
+  airflow-init:
+    <<: *airflow-common
+    container_name: airlfow-init
+    entrypoint: /bin/bash
+    # yamllint disable rule:line-length
+    command:
+      - -c
+      - |
+        if [[ -z "${AIRFLOW_UID}" ]]; then
+          echo
+          echo -e "\033[1;33mWARNING!!!: AIRFLOW_UID not set!\e[0m"
+          echo "If you are on Linux, you SHOULD follow the instructions below to set "
+          echo "AIRFLOW_UID environment variable, otherwise files will be owned by root."
+          echo "For other operating systems you can get rid of the warning with manually created .env file:"
+          echo "    See: https://airflow.apache.org/docs/apache-airflow/stable/howto/docker-compose/index.html#setting-the-right-airflow-user"
+          echo
+          export AIRFLOW_UID=$$(id -u)
+        fi
+        one_meg=1048576
+        mem_available=$$(($$(getconf _PHYS_PAGES) * $$(getconf PAGE_SIZE) / one_meg))
+        cpus_available=$$(grep -cE 'cpu[0-9]+' /proc/stat)
+        disk_available=$$(df / | tail -1 | awk '{print $$4}')
+        warning_resources="false"
+        if (( mem_available < 4000 )) ; then
+          echo
+          echo -e "\033[1;33mWARNING!!!: Not enough memory available for Docker.\e[0m"
+          echo "At least 4GB of memory required. You have $$(numfmt --to iec $$((mem_available * one_meg)))"
+          echo
+          warning_resources="true"
+        fi
+        if (( cpus_available < 2 )); then
+          echo
+          echo -e "\033[1;33mWARNING!!!: Not enough CPUS available for Docker.\e[0m"
+          echo "At least 2 CPUs recommended. You have $${cpus_available}"
+          echo
+          warning_resources="true"
+        fi
+        if (( disk_available < one_meg * 10 )); then
+          echo
+          echo -e "\033[1;33mWARNING!!!: Not enough Disk space available for Docker.\e[0m"
+          echo "At least 10 GBs recommended. You have $$(numfmt --to iec $$((disk_available * 1024 )))"
+          echo
+          warning_resources="true"
+        fi
+        if [[ $${warning_resources} == "true" ]]; then
+          echo
+          echo -e "\033[1;33mWARNING!!!: You have not enough resources to run Airflow (see above)!\e[0m"
+          echo "Please follow the instructions to increase amount of resources available:"
+          echo "   https://airflow.apache.org/docs/apache-airflow/stable/howto/docker-compose/index.html#before-you-begin"
+          echo
+        fi
+        echo
+        echo "Creating missing opt dirs if missing:"
+        echo
+        mkdir -v -p /opt/airflow/{logs,dags,plugins,config}
+        echo
+        echo "Airflow version:"
+        /entrypoint airflow version
+        echo
+        echo "Files in shared volumes:"
+        echo
+        ls -la /opt/airflow/{logs,dags,plugins,config}
+        echo
+        echo "Running airflow config list to create default config file if missing."
+        echo
+        /entrypoint airflow config list >/dev/null
+        echo
+        echo "Files in shared volumes:"
+        echo
+        ls -la /opt/airflow/{logs,dags,plugins,config}
+        echo
+        echo "Change ownership of files in /opt/airflow to ${AIRFLOW_UID}:0"
+        echo
+        chown -R "${AIRFLOW_UID}:0" /opt/airflow/
+        echo
+        echo "Change ownership of files in shared volumes to ${AIRFLOW_UID}:0"
+        echo
+        chown -v -R "${AIRFLOW_UID}:0" /opt/airflow/{logs,dags,plugins,config}
+        echo
+        echo "Files in shared volumes:"
+        echo
+        ls -la /opt/airflow/{logs,dags,plugins,config}
+
+    # yamllint enable rule:line-length
+    environment:
+      <<: *airflow-common-env
+      _AIRFLOW_DB_MIGRATE: 'true'
+      _AIRFLOW_WWW_USER_CREATE: 'true'
+      _AIRFLOW_WWW_USER_USERNAME: ${_AIRFLOW_WWW_USER_USERNAME:-airflow}
+      _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD:-airflow}
+      _PIP_ADDITIONAL_REQUIREMENTS: ''
+    user: 0:0
+    
   minio:
     image: minio/minio:latest
     container_name: minio
@@ -106,11 +287,112 @@ services:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
     volumes:
-      - ./volumes/minio:/data
+      - ./docker_volumes/minio:/data
     command: server /data --console-address ":9001"
     restart: always
     networks:
       - myNetwork
+
+  # marquez:
+  #   image: marquezproject/marquez:latest
+  #   container_name: marquez
+  #   depends_on:
+  #     - postgres
+  #   environment:
+  #     MARQUEZ_DB_HOST: postgres
+  #     MARQUEZ_DB_PORT: 5432
+  #     MARQUEZ_DB_USER: marquez
+  #     MARQUEZ_DB_PASSWORD: marquez
+  #     MARQUEZ_DB_DATABASE: marquez
+  #     MARQUEZ_PORT: 5000
+  #     MARQUEZ_CONFIG: /app/config.yml
+  #   ports:
+  #     - "5000:5000"
+  #   restart: always
+  #   volumes:
+  #     - ./marquez.dev.yml:/app/config.yml
+  #   networks:
+  #     - myNetwork
+
+  # marquez-web:
+  #   image: marquezproject/marquez-web:latest
+  #   container_name: marquez-web
+  #   depends_on:
+  #     - marquez
+  #   environment:
+  #     - WEB_PORT=3000
+  #     - MARQUEZ_HOST=marquez
+  #     - MARQUEZ_PORT=5000
+  #     - MARQUEZ_URL=http://marquez:5000
+  #   ports:
+  #     - "3000:3000"
+  #   networks:
+  #     - myNetwork
+
+  # superset:
+  #   image: apache/superset:latest
+  #   container_name: superset
+  #   environment:
+  #     - SUPERSET_SECRET_KEY=MyVerySecretKey
+  #     - SQLALCHEMY_DATABASE_URI=postgresql+psycopg2://airflow:airflow@postgres:5432/superset
+  #   ports:
+  #     - "8088:8088"
+  #   depends_on:
+  #     - postgres
+  #   command:
+  #     - /bin/sh
+  #     - -c
+  #     - >
+  #       superset db upgrade &&
+  #       superset init &&
+  #       gunicorn --bind 0.0.0.0:8088 --workers 4 "superset.app:create_app()"
+  #   networks:
+  #     - myNetwork
+
+  # hive-metastore:
+  #   image: 'starburstdata/hive:3.1.2-e.18'
+  #   container_name: hive-metastore
+  #   ports:
+  #     - '9083:9083'
+  #   restart: always
+  #   environment:
+  #     HIVE_METASTORE_DRIVER: org.postgresql.Driver
+  #     HIVE_METASTORE_JDBC_URL: jdbc:postgresql://postgres:5432/metastore
+  #     HIVE_METASTORE_USER: hive
+  #     HIVE_METASTORE_PASSWORD: hive
+  #     HIVE_METASTORE_WAREHOUSE_DIR: s3://gold-layer/
+  #     S3_ENDPOINT: http://minio:9000
+  #     S3_ACCESS_KEY: minioadmin
+  #     S3_SECRET_KEY: minioadmin
+  #     S3_PATH_STYLE_ACCESS: "true"
+  #     HIVE_METASTORE_USERS_IN_ADMIN_ROLE: admin
+  #     REGION: ""
+  #     GOOGLE_CLOUD_KEY_FILE_PATH: ""
+  #     AZURE_ADL_CLIENT_ID: ""
+  #     AZURE_ADL_CREDENTIAL: ""
+  #     AZURE_ADL_REFRESH_URL: ""
+  #     AZURE_ABFS_STORAGE_ACCOUNT: ""
+  #     AZURE_ABFS_ACCESS_KEY: ""
+  #     AZURE_WASB_STORAGE_ACCOUNT: ""
+  #     AZURE_ABFS_OAUTH: ""
+  #     AZURE_ABFS_OAUTH_TOKEN_PROVIDER: ""
+  #     AZURE_ABFS_OAUTH_CLIENT_ID: ""
+  #     AZURE_ABFS_OAUTH_SECRET: ""
+  #     AZURE_ABFS_OAUTH_ENDPOINT: ""
+  #     AZURE_WASB_ACCESS_KEY: ""
+  #   networks:
+  #     - myNetwork
+
+  # trino:
+  #   image: trinodb/trino:latest
+  #   container_name: trino
+  #   ports:
+  #     - "8080:8080"
+  #   volumes:
+  #     - ./docker_infra/trino/etc:/etc/trino
+  #     - ./docker_infra/trino/catalog:/etc/trino/catalog
+  #   networks:
+  #     - myNetwork
 
 networks:
   myNetwork:

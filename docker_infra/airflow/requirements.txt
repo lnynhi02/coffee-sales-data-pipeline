@@ -1,0 +1,10 @@
+psycopg2-binary
+asyncpg
+apache-airflow-providers-celery
+apache-airflow-providers-fab
+grpcio-status
+apache-airflow-providers-apache-spark
+pydeequ
+python-dotenv
+minio
+loguru

@@ -1,0 +1,2 @@
+{"timestamp": "2025-12-24T15:40:31.825544", "level": "ERROR", "service": "check_and_recommender", "event": "PROCESS_MESSAGE_FAILED", "order_id": null, "message": "Unhandled error in recommendation engine", "meta": {"error": "'Logger' object has no attribute 'success'"}}
+{"timestamp": "2025-12-24T15:40:31.842229", "level": "ERROR", "service": "check_and_recommender", "event": "PROCESS_MESSAGE_FAILED", "order_id": null, "message": "Unhandled error in recommendation engine", "meta": {"error": "'Logger' object has no attribute 'success'"}}
