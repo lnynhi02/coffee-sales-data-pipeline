@@ -23,7 +23,7 @@ from kafka import KafkaProducer
 from src.utils.kafka_handler import KafkaHandler
 from src.utils.log_handler import *
 
-logger = get_logger(service_name="check_and_recommender", branch="consumer")
+logger = setup_logger(service_name="check_and_recommender", branch="consumer")
 
 redis_static = redis.Redis(host="localhost", port=6379, db=0, decode_responses=True)
 redis_dynamic = redis.Redis(host="localhost", port=6379, db=1, decode_responses=True)
@@ -86,7 +86,7 @@ def process_message(message, producer: KafkaProducer):
     # If order does not meet criteria, mark as completed and skip recommendation
     if not is_order_eligible(customer_id, payment_method_id):
         redis_dynamic.set(f"order_status:{order_id}", "completed", ex=100)
-        logger.info(
+        logger.success(
             "Order marked completed without recommendation",
             extra={
                 "event": "ORDER_SKIPPED",
@@ -149,7 +149,7 @@ def process_message(message, producer: KafkaProducer):
     
     # --- Mark order as completed ---
     redis_dynamic.set(f"order_status:{order_id}", "completed", ex=100)
-    logger.info(
+    logger.success(
         "Order marked completed with recommendation",
         extra={
             "event": "ORDER_RECOMMENDED",

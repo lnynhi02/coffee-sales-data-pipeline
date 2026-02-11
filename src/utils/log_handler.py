@@ -1,5 +1,6 @@
+from loguru import logger
+import sys
 import json
-import logging
 from pathlib import Path
 from datetime import datetime, date
 
@@ -9,49 +10,71 @@ LOG_DIR = BASE_DIR / "logs" / TODAY
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 
 
-class JsonFormatter(logging.Formatter):
-    def format(self, record):
-        base = {
-            "timestamp": datetime.now().isoformat(),
-            "level": record.levelname,
-            "service": record.name,
-            "event": getattr(record, "event", None),
-            "order_id": getattr(record, "order_id", None),
-            "message": record.getMessage(),
-            "meta": getattr(record, "meta", None)
-        }
-        return json.dumps(base, ensure_ascii=False)
+def json_sink(message):
+    r = message.record
+    data = {
+        "ts": r["time"].timestamp(),
+        "level": r["level"].name,
+        "service": r["extra"].get("service"),
+        "event": r["extra"].get("event"),
+        "order_id": r["extra"].get("order_id"),
+        "message": r["message"],
+        "meta": r["extra"].get("meta"),
+    }
+
+    log_file = message.record["extra"]["_log_file"]
+    with open(log_file, "a", encoding="utf-8") as f:
+        f.write(json.dumps(data, ensure_ascii=False) + "\n")
 
 
-class ConsoleFormatter(logging.Formatter):
-    def format(self, record):
-        ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
-        return (
-            f"{ts} | {record.levelname:<5} | "
-            f"{record.name:<16} | "
-            f"order={getattr(record, 'order_id', '')} | "
-            f"msg=\"{record.getMessage()}\" | "
-            f"meta={getattr(record, 'meta', None)}"
-        )
+def patch_record(record):
+    extra = record["extra"]
+
+    nested = extra.pop("extra", None)
+    if isinstance(nested, dict):
+        for k, v in nested.items():
+            extra.setdefault(k, v)
+
+    extra.setdefault("event", None)
+    extra.setdefault("order_id", None)
+    extra.setdefault("meta", None)
+
+    return record
 
 
-def get_logger(service_name, branch):
-    logger = logging.getLogger(service_name)
-    logger.setLevel(logging.INFO)
 
-    if not logger.handlers:
-        # Console handler
-        ch = logging.StreamHandler()
-        ch.setFormatter(ConsoleFormatter())
-        logger.addHandler(ch)
+def setup_logger(service_name, branch):
+    logger.remove()
 
-        # File handler
-        log_path = LOG_DIR / branch
-        log_path.mkdir(parents=True, exist_ok=True)
+    logger.configure(patcher=patch_record)
 
-        file_name = f"{service_name}.log"
-        fh = logging.FileHandler(str(log_path / file_name))
-        fh.setFormatter(JsonFormatter())
-        logger.addHandler(fh)
+    # Console
+    logger.add(
+        sys.stdout,
+        format=(
+            "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | "
+            "<level>{level:<7}</level> | "
+            f"{service_name:<16} | "
+            "order={extra[order_id]} | "
+            "msg=\"{message}\" | "
+            "meta={extra[meta]}"
+        ),
+        level="INFO",
+        enqueue=True,
+    )
 
-    return logger
+    log_path = LOG_DIR / branch
+    log_path.mkdir(parents=True, exist_ok=True)
+    log_file = log_path / f"{service_name}.log"
+
+    # JSON business log
+    logger.add(
+        json_sink, 
+        level="INFO",
+        enqueue=True,
+    )
+
+    return logger.bind(
+        service=service_name,
+        _log_file=str(log_file)
+    )

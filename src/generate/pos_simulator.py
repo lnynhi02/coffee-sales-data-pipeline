@@ -14,7 +14,7 @@ from datetime import datetime
 from src.utils.db_helper import *
 from src.utils.log_handler import *
 
-logger = get_logger(service_name="order_generator", branch="generator")
+logger = setup_logger(service_name="order_generator", branch="generator")
 fake = Faker()
 
 class POSSimulator:
@@ -122,7 +122,7 @@ class POSSimulator:
                         # """, (order_id, product_id, quantity, subtotal, False))
 
                     conn.commit()
-                    logger.info(
+                    logger.success(
                         "New order created",
                         extra={"event": "ORDER_CREATED", "order_id": order_id}
                     )

@@ -23,7 +23,7 @@ from loguru import logger
 from src.utils.kafka_handler import KafkaHandler
 from src.utils.log_handler import *
 
-logger = get_logger(service_name="order_details_tracker", branch="consumer")
+logger = setup_logger(service_name="order_details_tracker", branch="consumer")
 
 # Redis Configuration
 redis_dynamic = redis.Redis(host="localhost", port=6379, db=1, decode_responses=True)
@@ -50,7 +50,7 @@ def check_and_trigger(order_id, producer):
         redis_dynamic.delete(f"order_info:{order_id}")
         redis_dynamic.delete(f"ordered_products:{order_id}")
 
-        logger.info(
+        logger.success(
             "Order ready for recommendation checking",
             extra={
                 "event": "ORDER_READY_FOR_CHECKING",
