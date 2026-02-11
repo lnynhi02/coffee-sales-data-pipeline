@@ -2,7 +2,7 @@
     "name": "mysql-src-connector",
     "config": {
         "connector.class": "io.debezium.connector.mysql.MySqlConnector",
-        "database.hostname": "host.docker.internal",
+        "database.hostname": "mysql",
         "database.port": "3306",
         "database.user": "dbz-user",
         "database.password": "dbz-user",
@@ -11,7 +11,7 @@
         "database.include.list": "coffee_shop",
         "table.include.list": "coffee_shop.order_details, coffee_shop.orders",
         "message.key.columns": "coffee_shop.order_details:order_id",
-        "schema.history.internal.kafka.bootstrap.servers": "kafka-1:9092,kafka-2:9092",
+        "schema.history.internal.kafka.bootstrap.servers": "kafka-1:9092,kafka-2:9092,kafka-3:9092",
         "schema.history.internal.kafka.topic": "schemahistory.coffee_shop",
         "snapshot.mode": "when_needed",
         "publish.full.document.only": "true",

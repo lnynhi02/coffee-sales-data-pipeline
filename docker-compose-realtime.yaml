@@ -1,4 +1,34 @@
 services:
+  mysql:
+      image: mysql:8.0
+      container_name: mysql
+      restart: unless-stopped
+      environment:
+        MYSQL_ROOT_PASSWORD: mysql
+        MYSQL_DATABASE: ${MYSQL_DATABASE}
+        MYSQL_USER: ${MYSQL_USER}
+        MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      ports:
+        - "3306:3306"
+      volumes:
+        - ./docker_volumes/mysql:/var/lib/mysql
+      networks:
+        - myNetwork
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+    depends_on:
+      - mysql
+    networks:
+      - myNetwork
+
   kafka-1:
     image: confluentinc/cp-enterprise-kafka:7.7.7
     container_name: kafka-1
