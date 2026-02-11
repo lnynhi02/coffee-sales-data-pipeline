@@ -3,3 +3,13 @@ Faker
 redis
 kafka-python
 pyspark
+python-dotenv
+minio
+loguru
+confluent-kafka
+httpx
+authlib
+cachetools
+attrs
+orjson
+jsonschema
