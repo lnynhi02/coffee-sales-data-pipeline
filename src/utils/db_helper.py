@@ -6,7 +6,7 @@ from contextlib import contextmanager
 import mysql.connector
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
-dotenv_path = BASE_DIR / "configs" / ".env"
+dotenv_path = BASE_DIR / ".env"
 load_dotenv(str(dotenv_path))
 
 def get_mysql_config():
