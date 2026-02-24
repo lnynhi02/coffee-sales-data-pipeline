@@ -194,6 +194,9 @@ services:
     image: confluentinc/cp-kafka-connect:7.7.7
     container_name: kafka-connect-init
     depends_on:
+      - kafka-1
+      - kafka-2
+      - kafka-3
       - kafka-connect
     volumes:
       - ./docker_infra/kafka-connect:/config
