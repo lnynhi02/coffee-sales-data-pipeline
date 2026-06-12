@@ -1,21 +1,26 @@
 services:
   mysql:
-      image: mysql:8.0
-      container_name: mysql
-      command: --local-infile=1
-      environment:
-        MYSQL_ROOT_PASSWORD: mysql
-        MYSQL_DATABASE: ${MYSQL_DATABASE}
-        MYSQL_USER: ${MYSQL_USER}
-        MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-      ports:
-        - "3306:3306"
-      restart: unless-stopped
-      volumes:
-        - ./docker_volumes/mysql:/var/lib/mysql
-        - ./docker_infra/mysql/mysql_init:/docker-entrypoint-initdb.d
-      networks:
-        - myNetwork
+    image: mysql:8.0
+    container_name: mysql
+    command: --local-infile=1
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "3306:3306"
+    restart: always
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - ./docker_volumes/mysql:/var/lib/mysql
+      - ./docker_infra/mysql/mysql_init:/docker-entrypoint-initdb.d
+    networks:
+      - myNetwork
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
@@ -38,8 +43,8 @@ services:
       - "19092:19092"
     environment:
       KAFKA_NODE_ID: 1
-      KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_METRIC_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
+      KAFKA_PROCESS_ROLES: controller,broker
+      # KAFKA_METRIC_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
       CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: kafka-1:9092,kafka-2:9092,kafka-3:9092
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-1:29093,2@kafka-2:29093,3@kafka-3:29093
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,EXTERNAL://0.0.0.0:19092,CONTROLLER://0.0.0.0:29093
@@ -52,9 +57,9 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_OPTS: -javaagent:/usr/share/jmx-exporter/jmx_prometheus_javaagent-0.20.0.jar=9300:/usr/share/jmx-exporter/kafka-broker.yml
+      # KAFKA_OPTS: -javaagent:/usr/share/jmx-exporter/jmx_prometheus_javaagent-0.20.0.jar=9300:/usr/share/jmx-exporter/kafka-broker.yml
     volumes:
-      - ./docker_infra/jmx-exporter:/usr/share/jmx-exporter
+      # - ./docker_infra/jmx-exporter:/usr/share/jmx-exporter
       - ./docker_volumes/kafka-1/data:/var/lib/kafka/data
     networks:
       - myNetwork
@@ -62,12 +67,14 @@ services:
   kafka-2:
     image: confluentinc/cp-enterprise-kafka:7.7.7
     container_name: kafka-2
+    depends_on:
+      - kafka-1
     ports:
       - "19093:19093"
     environment:
       KAFKA_NODE_ID: 2
-      KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_METRIC_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
+      KAFKA_PROCESS_ROLES: controller,broker
+      # KAFKA_METRIC_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
       CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: kafka-1:9092,kafka-2:9092,kafka-3:9092
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-1:29093,2@kafka-2:29093,3@kafka-3:29093
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,EXTERNAL://0.0.0.0:19093,CONTROLLER://0.0.0.0:29093
@@ -80,9 +87,9 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_OPTS: -javaagent:/usr/share/jmx-exporter/jmx_prometheus_javaagent-0.20.0.jar=9300:/usr/share/jmx-exporter/kafka-broker.yml
+      # KAFKA_OPTS: -javaagent:/usr/share/jmx-exporter/jmx_prometheus_javaagent-0.20.0.jar=9300:/usr/share/jmx-exporter/kafka-broker.yml
     volumes:
-      - ./docker_infra/jmx-exporter:/usr/share/jmx-exporter
+      # - ./docker_infra/jmx-exporter:/usr/share/jmx-exporter
       - ./docker_volumes/kafka-2/data:/var/lib/kafka/data
     networks:
       - myNetwork
@@ -90,12 +97,14 @@ services:
   kafka-3:
     image: confluentinc/cp-enterprise-kafka:7.7.7
     container_name: kafka-3
+    depends_on:
+      - kafka-1
     ports:
       - "19094:19094"
     environment:
       KAFKA_NODE_ID: 3
-      KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_METRIC_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
+      KAFKA_PROCESS_ROLES: controller,broker
+      # KAFKA_METRIC_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
       CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: kafka-1:9092,kafka-2:9092,kafka-3:9092
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-1:29093,2@kafka-2:29093,3@kafka-3:29093
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,EXTERNAL://0.0.0.0:19094,CONTROLLER://0.0.0.0:29093
@@ -108,9 +117,9 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_OPTS: -javaagent:/usr/share/jmx-exporter/jmx_prometheus_javaagent-0.20.0.jar=9300:/usr/share/jmx-exporter/kafka-broker.yml
+      # KAFKA_OPTS: -javaagent:/usr/share/jmx-exporter/jmx_prometheus_javaagent-0.20.0.jar=9300:/usr/share/jmx-exporter/kafka-broker.yml
     volumes:
-      - ./docker_infra/jmx-exporter:/usr/share/jmx-exporter
+      # - ./docker_infra/jmx-exporter:/usr/share/jmx-exporter
       - ./docker_volumes/kafka-3/data:/var/lib/kafka/data
     networks:
       - myNetwork
@@ -162,6 +171,7 @@ services:
       - kafka-1
       - kafka-2
       - kafka-3
+      - mysql
     ports:
       - "8083:8083"
     environment:
@@ -194,10 +204,10 @@ services:
     image: confluentinc/cp-kafka-connect:7.7.7
     container_name: kafka-connect-init
     depends_on:
-      - kafka-1
-      - kafka-2
-      - kafka-3
-      - kafka-connect
+      mysql:
+        condition: service_started
+      kafka-connect:
+        condition: service_started
     volumes:
       - ./docker_infra/kafka-connect:/config
     entrypoint: ["/bin/sh", "/config/register.sh"]
@@ -219,7 +229,7 @@ services:
       CONTROL_CENTER_BOOTSTRAP_SERVERS: kafka-1:9092,kafka-2:9092,kafka-3:9092
       CONTROL_CENTER_CONNECT_CONNECT-DEFAULT_CLUSTER: http://kafka-connect:8083
       CONTROL_CENTER_SCHEMA_REGISTRY_URL: http://schema-registry:8081
-      CONTROL_CENTER_REPLICATION_FACTOR: 3
+      CONTROL_CENTER_REPLICATION_FACTOR: 3  
       CONTROL_CENTER_INTERNAL_TOPICS_PARTITIONS: 1
       CONTROL_CENTER_MONITORING_INTERCEPTOR_TOPIC_PARTITIONS: 1
       CONTROL_CENTER_MONITORING_INTERCEPTOR_TOPIC_REPLICATION: 3
@@ -243,6 +253,37 @@ services:
       - kafka-1
       - kafka-2 
       - kafka-3
+    networks:
+      - myNetwork
+
+  flink-jobmanager:
+    build:
+      context: .
+      dockerfile: ./docker_infra/flink/Dockerfile
+    container_name: flink-jobmanager
+    ports:
+      - "8081:9081"
+    command: jobmanager
+    environment:
+    - |
+      FLINK_PROPERTIES=
+      jobmanager.rpc.address: flink-jobmanager
+    networks:
+      - myNetwork
+
+  flink-taskmanager:
+    build:
+      context: .
+      dockerfile: ./docker_infra/flink/Dockerfile
+    container_name: flink-taskmanager
+    depends_on:
+      - flink-jobmanager
+    command: taskmanager
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+        taskmanager.numberOfTaskSlots: 10
     networks:
       - myNetwork
 
