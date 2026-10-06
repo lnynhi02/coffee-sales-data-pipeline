@@ -13,9 +13,6 @@ from pathlib import Path
 import redis
 import mysql.connector
 
-BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
-sys.path.append(str(BASE_DIR))
-
 from src.utils.common_helper import get_mysql_config
 
 # Redis connection
