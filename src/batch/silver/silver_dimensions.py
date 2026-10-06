@@ -27,7 +27,6 @@ logger.add(
     enqueue=True
 )
     
-+
 def read_bronze_layer(spark, table):
     return spark.read.parquet(f"s3a://bronze-layer/{table}")
 

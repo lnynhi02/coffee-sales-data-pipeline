@@ -114,11 +114,11 @@ def order_info_worker(worker_id: int):
 
 
 def main():
-    num_workers = 3
+    num_workers = 4
     processes = []
 
     for i in range(num_workers):
-        p = multiprocessing.Process(target=order_info_worker, args=(i,))
+        p = multiprocessing.Process(target=order_info_worker, args=(i+1,))
         p.start()
         processes.append(p)
 
