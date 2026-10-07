@@ -4,11 +4,8 @@
 # =======================================================================
 
 import logging
-from pathlib import Path
 
 from pyspark.sql import SparkSession
-
-BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Setup logging
 logging.basicConfig(

@@ -1,11 +1,12 @@
 import os
+
 from pathlib import Path
 from dotenv import load_dotenv
-
 from minio import Minio
 
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
-dotenv_path = Path("configs/.env")
+from src.utils.paths import CONFIGS_DIR
+
+dotenv_path = CONFIGS_DIR / ".env"
 load_dotenv(dotenv_path)
 
 def get_mysql_config():

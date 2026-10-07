@@ -8,6 +8,7 @@
 # ==================================================================================
 
 import os
+
 from loguru import logger
 from datetime import datetime
 from pathlib import Path
@@ -17,12 +18,11 @@ from pydeequ.checks import *
 from pydeequ.verification import *
 from pydeequ.repository import FileSystemMetricsRepository
 
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
+from src.utils.paths import BATCH_LOG
+
 TODAY = datetime.now()
 
-LOG_FILE = BASE_DIR / "logger" / "data_validation.log"
-logger.remove()
-
+LOG_FILE = BATCH_LOG / "data_validation.log"
 logger.add(
     LOG_FILE, 
     rotation="00:00",

@@ -17,14 +17,14 @@
 # ==================================================================================
 
 import sys
-from pathlib import Path
-BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
 
 import mysql.connector
 from mysql.connector import errorcode
-from src.utils.db_helper import get_mysql_config
 
-DATA_DIR = BASE_DIR / "data" / "seeds"
+from src.utils.db_helper import get_mysql_config
+from src.utils.paths import DATA_DIR
+
+DATA_SEEDS = DATA_DIR / "seeds"
 
 def connect_database(user, password, host, database):
     """Connect to MySQL database."""
@@ -78,12 +78,12 @@ def main():
 
     # Load CSV files to each table
     tables_and_files = {
-        'stores': str(DATA_DIR / 'stores.csv'),
-        'payment_method': str(DATA_DIR / 'payment_method.csv'),
-        'product_category': str(DATA_DIR / 'product_category.csv'),
-        'products': str(DATA_DIR / 'products.csv'),
-        'customers': str(DATA_DIR / 'customers.csv'),
-        'customer_points': str(DATA_DIR / 'customer_points.csv'),
+        'stores': str(DATA_SEEDS / 'stores.csv'),
+        'payment_method': str(DATA_SEEDS / 'payment_method.csv'),
+        'product_category': str(DATA_SEEDS / 'product_category.csv'),
+        'products': str(DATA_SEEDS / 'products.csv'),
+        'customers': str(DATA_SEEDS / 'customers.csv'),
+        'customer_points': str(DATA_SEEDS / 'customer_points.csv'),
     }
     for table, csv_path in tables_and_files.items():
         load_data_to_table(cursor, table, csv_path)

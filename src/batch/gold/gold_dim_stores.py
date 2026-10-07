@@ -9,20 +9,17 @@
 #   - Can be queried directly for analytics and reporting.
 # ==================================================================================
 import sys
-from pathlib import Path
-BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
 
 from loguru import logger
-
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import *
 from delta.tables import DeltaTable
 
 from src.utils.spark_helper import *
-
+from src.utils.paths import BATCH_LOG
 
 # Setup logging
-LOG_FILE = Path("logs/batch.log")
+LOG_FILE = BATCH_LOG / "batch.log"
 logger.remove()
 
 logger.add(

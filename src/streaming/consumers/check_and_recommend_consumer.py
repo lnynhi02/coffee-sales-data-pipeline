@@ -7,12 +7,6 @@
 #   - Recommend random product with discount offers if conditions are met
 # =======================================================================
 
-import os
-import sys
-from pathlib import Path
-BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
-os.chdir(BASE_DIR)
-
 import random
 import redis
 import multiprocessing

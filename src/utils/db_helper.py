@@ -1,13 +1,14 @@
 import os
+import mysql.connector
+
 from pathlib import Path
 from dotenv import load_dotenv
 from contextlib import contextmanager
 
-import mysql.connector
+from src.utils.paths import PROJECT_ROOT
 
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
-dotenv_path = BASE_DIR / ".env"
-load_dotenv(str(dotenv_path))
+dotenv_path = PROJECT_ROOT / ".env"
+load_dotenv(dotenv_path)
 
 def get_mysql_config():
     return {

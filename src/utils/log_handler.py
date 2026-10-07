@@ -1,12 +1,14 @@
-from loguru import logger
 import sys
 import json
+
+from loguru import logger
 from pathlib import Path
 from datetime import datetime, date
 
+from src.utils.paths import LOG_DIR
+
 TODAY = date.today().strftime("%Y-%m-%d")
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
-LOG_DIR = BASE_DIR / "logs" / TODAY
+LOG_DIR = LOG_DIR / TODAY
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 
 

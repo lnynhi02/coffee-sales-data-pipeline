@@ -9,15 +9,16 @@
 
 import sys
 import json
+
 from loguru import logger
 from pathlib import Path
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import *
 
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
+from src.utils.paths import BATCH_LOG
 
 # Logging setup
-LOG_FILE = BASE_DIR / "logger" / "data_validation.log"
+LOG_FILE = BATCH_LOG / "data_validation.log"
 logger.remove()
 
 logger.add(

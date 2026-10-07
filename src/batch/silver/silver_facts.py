@@ -8,18 +8,16 @@
 #   - Writes data to the Silver Layer in Parquet format for analytical use.
 # ===========================================================================
 import sys
-from pathlib import Path
-BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
 
-from pathlib import Path
 from loguru import logger
-
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import *
+
 from src.utils.spark_helper import *
+from src.utils.paths import BATCH_LOG
 
 # Setup logging
-LOG_FILE = BASE_DIR / "logs" / "batch.log"
+LOG_FILE = BATCH_LOG / "batch.log"
 logger.remove()
 
 logger.add(
