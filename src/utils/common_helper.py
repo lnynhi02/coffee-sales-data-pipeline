@@ -4,10 +4,9 @@ from pathlib import Path
 from dotenv import load_dotenv
 from minio import Minio
 
-from src.utils.paths import CONFIGS_DIR
+from src.utils.paths import ENV_FILE
 
-dotenv_path = CONFIGS_DIR / ".env"
-load_dotenv(dotenv_path)
+load_dotenv(ENV_FILE)
 
 def get_mysql_config():
     return {

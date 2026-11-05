@@ -5,10 +5,9 @@ from pathlib import Path
 from dotenv import load_dotenv
 from contextlib import contextmanager
 
-from src.utils.paths import PROJECT_ROOT
+from src.utils.paths import ENV_FILE
 
-dotenv_path = PROJECT_ROOT / ".env"
-load_dotenv(dotenv_path)
+load_dotenv(ENV_FILE)
 
 def get_mysql_config():
     return {

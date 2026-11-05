@@ -4,9 +4,9 @@ from dotenv import load_dotenv
 from minio import Minio
 from pyspark.sql import SparkSession
 
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
-dotenv_path = Path("configs/.env")
-load_dotenv(dotenv_path)
+from src.utils.paths import ENV_FILE
+
+load_dotenv(ENV_FILE)
 
 BASE_S3_CONFIG = {
     "spark.hadoop.fs.s3a.endpoint": "http://minio:9000",
@@ -47,3 +47,5 @@ def create_SparkSession(app_name: str, enable_delta: bool = False, extra_conf: d
             builder = builder.config(key, val)
 
     return builder.getOrCreate()
+
+
