@@ -1,16 +1,13 @@
-from dotenv import load_dotenv
-
-from minio import Minio
 from pyspark.sql import SparkSession
 
-from src.utils.paths import ENV_FILE
+from src.utils.minio_helper import get_minio_config
 
-load_dotenv(ENV_FILE)
+minio = get_minio_config()
 
 BASE_S3_CONFIG = {
-    "spark.hadoop.fs.s3a.endpoint": "http://minio:9000",
-    "spark.hadoop.fs.s3a.access.key": "minioadmin",
-    "spark.hadoop.fs.s3a.secret.key": "minioadmin",
+    "spark.hadoop.fs.s3a.endpoint": f"http://{minio['endpoint']}",
+    "spark.hadoop.fs.s3a.access.key": minio["access_key"],
+    "spark.hadoop.fs.s3a.secret.key": minio["secret_key"],
     "spark.hadoop.fs.s3a.path.style.access": "true",
     "spark.hadoop.fs.s3a.impl": "org.apache.hadoop.fs.s3a.S3AFileSystem",
 }
@@ -19,17 +16,6 @@ DELTA_CONFIG = {
     "spark.sql.extensions": "io.delta.sql.DeltaSparkSessionExtension",
     "spark.sql.catalog.spark_catalog": "org.apache.spark.sql.delta.catalog.DeltaCatalog",
 }
-
-
-def check_minio_has_data(bucket, prefix) -> bool:
-    client = Minio(
-        "minio:9000",
-        access_key="minioadmin",
-        secret_key="minioadmin",
-        secure=False
-    )
-
-    return any(client.list_objects(bucket, prefix=prefix, recursive=True))
 
 def create_SparkSession(app_name: str, enable_delta: bool = False, extra_conf: dict[str, str] = None) -> SparkSession:
     builder = SparkSession.builder.appName(app_name)
