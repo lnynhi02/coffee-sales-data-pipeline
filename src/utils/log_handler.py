@@ -2,8 +2,7 @@ import sys
 import json
 
 from loguru import logger
-from pathlib import Path
-from datetime import datetime, date
+from datetime import date
 
 from src.utils.paths import LOG_DIR
 

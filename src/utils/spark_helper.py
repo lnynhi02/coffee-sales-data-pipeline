@@ -1,4 +1,3 @@
-from pathlib import Path
 from dotenv import load_dotenv
 
 from minio import Minio
