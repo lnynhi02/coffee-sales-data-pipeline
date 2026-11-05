@@ -7,19 +7,22 @@ from datetime import datetime, date
 
 from src.utils.paths import LOG_DIR
 
-TODAY = date.today().strftime("%Y-%m-%d")
-LOG_DIR = LOG_DIR / TODAY
-LOG_DIR.mkdir(parents=True, exist_ok=True)
 
+def json_sink(service: str, component: str, message: dict) -> None:
+    today = date.today().strftime("%Y-%m-%d")
 
-def json_sink(log_file: str, message) -> None:
+    log_path = LOG_DIR / today / service
+    log_path.mkdir(parents=True, exist_ok=True)
+
+    log_file_path = log_path / f"{component}.jsonl"
+
     record = message.record
     data = {
         "ts": record["time"].isoformat(),
         "level": record["level"].name,
         "service": record["extra"].get("service"),
-        "event": record["extra"].get("event"),
         "component": record["extra"].get("component"),
+        "event": record["extra"].get("event"),
         "request_id": record["extra"].get("request_id"),
         "order_id": record["extra"].get("order_id"),
         "message": record["message"],
@@ -29,7 +32,7 @@ def json_sink(log_file: str, message) -> None:
         ),
     }
 
-    with open(log_file, "a", encoding="utf-8") as file:
+    with open(log_file_path, "a", encoding="utf-8") as file:
         file.write(json.dumps(data, ensure_ascii=False, default=str) + "\n")
 
 
@@ -63,6 +66,7 @@ def setup_logger(service: str, component: str):
             "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | "
             "<level>{level:<7}</level> | "
             f"{service:<16} | {component:<24} | "
+            "{extra[event]} | "
             "order={extra[order_id]} | "
             "msg=\"{message}\" | "
             "meta={extra[meta]}"
@@ -71,13 +75,9 @@ def setup_logger(service: str, component: str):
         enqueue=True,
     )
 
-    log_path = LOG_DIR / service
-    log_path.mkdir(parents=True, exist_ok=True)
-    log_file = log_path / f"{component}.jsonl"
-
     # JSON business log
     logger.add(
-        lambda message: json_sink(str(log_file), message),
+        lambda message: json_sink(service, component, message),
         level="INFO",
         enqueue=True,
     )
