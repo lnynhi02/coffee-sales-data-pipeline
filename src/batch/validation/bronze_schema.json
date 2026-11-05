@@ -1,0 +1,394 @@
+{
+  "brz.orders": {
+    "fields": [
+      {
+        "metadata": {
+          "__CHAR_VARCHAR_TYPE_STRING": "varchar(250)",
+          "scale": 0
+        },
+        "name": "id",
+        "nullable": true,
+        "type": "string"
+      },
+      {
+        "metadata": {
+          "scale": 0
+        },
+        "name": "timestamp",
+        "nullable": true,
+        "type": "timestamp"
+      },
+      {
+        "metadata": {
+          "scale": 0
+        },
+        "name": "customer_id",
+        "nullable": true,
+        "type": "integer"
+      },
+      {
+        "metadata": {
+          "scale": 0
+        },
+        "name": "store_id",
+        "nullable": true,
+        "type": "integer"
+      },
+      {
+        "metadata": {
+          "scale": 0
+        },
+        "name": "payment_method_id",
+        "nullable": true,
+        "type": "integer"
+      },
+      {
+        "metadata": {
+          "scale": 0
+        },
+        "name": "num_products",
+        "nullable": true,
+        "type": "integer"
+      },
+      {
+        "metadata": {},
+        "name": "year",
+        "nullable": true,
+        "type": "integer"
+      },
+      {
+        "metadata": {},
+        "name": "month",
+        "nullable": true,
+        "type": "integer"
+      },
+      {
+        "metadata": {},
+        "name": "day",
+        "nullable": true,
+        "type": "integer"
+      }
+    ],
+    "type": "struct"
+  },
+  "brz.order_details": {
+    "fields": [
+      {
+        "metadata": {
+          "__CHAR_VARCHAR_TYPE_STRING": "varchar(250)",
+          "scale": 0
+        },
+        "name": "order_id",
+        "nullable": true,
+        "type": "string"
+      },
+      {
+        "metadata": {
+          "__CHAR_VARCHAR_TYPE_STRING": "varchar(25)",
+          "scale": 0
+        },
+        "name": "product_id",
+        "nullable": true,
+        "type": "string"
+      },
+      {
+        "metadata": {
+          "scale": 0
+        },
+        "name": "quantity",
+        "nullable": true,
+        "type": "integer"
+      },
+      {
+        "metadata": {
+          "scale": 0
+        },
+        "name": "discount_percent",
+        "nullable": true,
+        "type": "integer"
+      },
+      {
+        "metadata": {
+          "scale": 0
+        },
+        "name": "subtotal",
+        "nullable": true,
+        "type": "integer"
+      },
+      {
+        "metadata": {
+          "scale": 0
+        },
+        "name": "is_suggestion",
+        "nullable": true,
+        "type": "boolean"
+      },
+      {
+        "metadata": {},
+        "name": "year",
+        "nullable": true,
+        "type": "integer"
+      },
+      {
+        "metadata": {},
+        "name": "month",
+        "nullable": true,
+        "type": "integer"
+      },
+      {
+        "metadata": {},
+        "name": "day",
+        "nullable": true,
+        "type": "integer"
+      }
+    ],
+    "type": "struct"
+  },
+  "brz.order_suggestion_accepted": {
+    "fields": [
+      {
+        "metadata": {},
+        "name": "order_id",
+        "nullable": true,
+        "type": "string"
+      },
+      {
+        "metadata": {},
+        "name": "product_id",
+        "nullable": true,
+        "type": "string"
+      },
+      {
+        "metadata": {},
+        "name": "quantity",
+        "nullable": true,
+        "type": "integer"
+      },
+      {
+        "metadata": {},
+        "name": "discount_percent",
+        "nullable": true,
+        "type": "integer"
+      },
+      {
+        "metadata": {},
+        "name": "subtotal",
+        "nullable": true,
+        "type": "integer"
+      },
+      {
+        "metadata": {},
+        "name": "is_suggestion",
+        "nullable": true,
+        "type": "boolean"
+      },
+      {
+        "metadata": {},
+        "name": "year",
+        "nullable": true,
+        "type": "integer"
+      },
+      {
+        "metadata": {},
+        "name": "month",
+        "nullable": true,
+        "type": "integer"
+      },
+      {
+        "metadata": {},
+        "name": "day",
+        "nullable": true,
+        "type": "integer"
+      }
+    ],
+    "type": "struct"
+  },
+  "brz.products": {
+    "fields": [
+      {
+        "metadata": {
+          "__CHAR_VARCHAR_TYPE_STRING": "varchar(25)",
+          "scale": 0
+        },
+        "name": "id",
+        "nullable": true,
+        "type": "string"
+      },
+      {
+        "metadata": {
+          "__CHAR_VARCHAR_TYPE_STRING": "varchar(50)",
+          "scale": 0
+        },
+        "name": "name",
+        "nullable": true,
+        "type": "string"
+      },
+      {
+        "metadata": {
+          "scale": 0
+        },
+        "name": "category_id",
+        "nullable": true,
+        "type": "integer"
+      },
+      {
+        "metadata": {
+          "scale": 0
+        },
+        "name": "unit_price",
+        "nullable": true,
+        "type": "integer"
+      },
+      {
+        "metadata": {
+          "scale": 0
+        },
+        "name": "updated_at",
+        "nullable": true,
+        "type": "timestamp"
+      },
+      {
+        "metadata": {},
+        "name": "year",
+        "nullable": true,
+        "type": "integer"
+      },
+      {
+        "metadata": {},
+        "name": "month",
+        "nullable": true,
+        "type": "integer"
+      },
+      {
+        "metadata": {},
+        "name": "day",
+        "nullable": true,
+        "type": "integer"
+      }
+    ],
+    "type": "struct"
+  },
+  "brz.product_category": {
+    "fields": [
+      {
+        "metadata": {
+          "scale": 0
+        },
+        "name": "id",
+        "nullable": true,
+        "type": "integer"
+      },
+      {
+        "metadata": {
+          "__CHAR_VARCHAR_TYPE_STRING": "varchar(25)",
+          "scale": 0
+        },
+        "name": "name",
+        "nullable": true,
+        "type": "string"
+      },
+      {
+        "metadata": {
+          "scale": 0
+        },
+        "name": "updated_at",
+        "nullable": true,
+        "type": "timestamp"
+      },
+      {
+        "metadata": {},
+        "name": "year",
+        "nullable": true,
+        "type": "integer"
+      },
+      {
+        "metadata": {},
+        "name": "month",
+        "nullable": true,
+        "type": "integer"
+      },
+      {
+        "metadata": {},
+        "name": "day",
+        "nullable": true,
+        "type": "integer"
+      }
+    ],
+    "type": "struct"
+  },
+  "brz.stores": {
+    "fields": [
+      {
+        "metadata": {
+          "scale": 0
+        },
+        "name": "id",
+        "nullable": true,
+        "type": "integer"
+      },
+      {
+        "metadata": {
+          "__CHAR_VARCHAR_TYPE_STRING": "varchar(20)",
+          "scale": 0
+        },
+        "name": "name",
+        "nullable": true,
+        "type": "string"
+      },
+      {
+        "metadata": {
+          "__CHAR_VARCHAR_TYPE_STRING": "varchar(250)",
+          "scale": 0
+        },
+        "name": "address",
+        "nullable": true,
+        "type": "string"
+      },
+      {
+        "metadata": {
+          "__CHAR_VARCHAR_TYPE_STRING": "varchar(50)",
+          "scale": 0
+        },
+        "name": "district",
+        "nullable": true,
+        "type": "string"
+      },
+      {
+        "metadata": {
+          "__CHAR_VARCHAR_TYPE_STRING": "varchar(50)",
+          "scale": 0
+        },
+        "name": "city",
+        "nullable": true,
+        "type": "string"
+      },
+      {
+        "metadata": {
+          "scale": 0
+        },
+        "name": "updated_at",
+        "nullable": true,
+        "type": "timestamp"
+      },
+      {
+        "metadata": {},
+        "name": "year",
+        "nullable": true,
+        "type": "integer"
+      },
+      {
+        "metadata": {},
+        "name": "month",
+        "nullable": true,
+        "type": "integer"
+      },
+      {
+        "metadata": {},
+        "name": "day",
+        "nullable": true,
+        "type": "integer"
+      }
+    ],
+    "type": "struct"
+  }
+}

@@ -1,0 +1,3 @@
+{"timestamp": "2025-12-24T15:40:31.127636", "level": "ERROR", "service": "order_tracker", "event": "ORDER_PROCESS_FAILED", "order_id": null, "message": "Failed to process order message", "meta": {"error": "'Logger' object has no attribute 'success'"}}
+{"timestamp": "2025-12-24T15:40:31.133263", "level": "ERROR", "service": "order_tracker", "event": "ORDER_PROCESS_FAILED", "order_id": null, "message": "Failed to process order message", "meta": {"error": "'Logger' object has no attribute 'success'"}}
+{"timestamp": "2025-12-24T15:40:31.154811", "level": "ERROR", "service": "order_tracker", "event": "ORDER_PROCESS_FAILED", "order_id": null, "message": "Failed to process order message", "meta": {"error": "'Logger' object has no attribute 'success'"}}

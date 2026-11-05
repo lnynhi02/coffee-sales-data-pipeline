@@ -1,0 +1,15 @@
+server:
+  applicationConnectors:
+    - type: http
+      port: 5000
+  adminConnectors:
+    - type: http
+      port: 5001
+
+db:
+  driverClass: org.postgresql.Driver
+  user: marquez
+  password: marquez
+  url: jdbc:postgresql://postgres:5432/marquez
+
+migrateOnStartup: true

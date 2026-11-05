@@ -1,0 +1,23 @@
+-- Airflow
+CREATE USER airflow WITH PASSWORD 'airflow';
+CREATE DATABASE airflow OWNER airflow;
+GRANT ALL PRIVILEGES ON DATABASE airflow TO airflow;
+
+-- Superset
+CREATE USER superset WITH PASSWORD 'superset';
+CREATE DATABASE superset OWNER superset;
+GRANT ALL PRIVILEGES ON DATABASE superset TO superset;
+
+-- Trino
+CREATE USER trino WITH PASSWORD 'trino';
+CREATE DATABASE trino OWNER trino;
+GRANT ALL PRIVILEGES ON DATABASE trino TO trino;
+
+CREATE USER hive WITH PASSWORD 'hive';
+CREATE DATABASE metastore OWNER hive;
+GRANT ALL PRIVILEGES ON DATABASE metastore TO hive;
+
+-- Marquez
+CREATE USER marquez WITH PASSWORD 'marquez';
+CREATE DATABASE marquez OWNER marquez;
+GRANT ALL PRIVILEGES ON DATABASE marquez TO marquez;
