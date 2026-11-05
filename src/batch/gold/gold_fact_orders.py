@@ -17,6 +17,7 @@ from pyspark.sql.functions import *
 
 from src.utils.spark_helper import *
 from src.utils.paths import BATCH_LOG
+from src.utils.minio_helper import check_minio_has_data
 
 # Setup logging
 LOG_FILE = BATCH_LOG / "batch.log"
