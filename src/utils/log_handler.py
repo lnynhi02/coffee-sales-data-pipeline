@@ -12,24 +12,28 @@ LOG_DIR = LOG_DIR / TODAY
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 
 
-def json_sink(message):
-    r = message.record
+def json_sink(log_file: str, message) -> None:
+    record = message.record
     data = {
-        "ts": r["time"].timestamp(),
-        "level": r["level"].name,
-        "service": r["extra"].get("service"),
-        "event": r["extra"].get("event"),
-        "order_id": r["extra"].get("order_id"),
-        "message": r["message"],
-        "meta": r["extra"].get("meta"),
+        "ts": record["time"].isoformat(),
+        "level": record["level"].name,
+        "service": record["extra"].get("service"),
+        "event": record["extra"].get("event"),
+        "component": record["extra"].get("component"),
+        "request_id": record["extra"].get("request_id"),
+        "order_id": record["extra"].get("order_id"),
+        "message": record["message"],
+        "meta": record["extra"].get("meta"),
+        "exception": (
+            record["exception"].message if record["exception"] else None
+        ),
     }
 
-    log_file = message.record["extra"]["_log_file"]
-    with open(log_file, "a", encoding="utf-8") as f:
-        f.write(json.dumps(data, ensure_ascii=False) + "\n")
+    with open(log_file, "a", encoding="utf-8") as file:
+        file.write(json.dumps(data, ensure_ascii=False, default=str) + "\n")
 
 
-def patch_record(record):
+def patch_record(record: dict) -> dict:
     extra = record["extra"]
 
     nested = extra.pop("extra", None)
@@ -37,15 +41,17 @@ def patch_record(record):
         for k, v in nested.items():
             extra.setdefault(k, v)
 
+    extra.setdefault("service", None)
     extra.setdefault("event", None)
+    extra.setdefault("component", None)
+    extra.setdefault("request_id", None)
     extra.setdefault("order_id", None)
     extra.setdefault("meta", None)
 
     return record
 
 
-
-def setup_logger(service_name, branch):
+def setup_logger(service: str, component: str):
     logger.remove()
 
     logger.configure(patcher=patch_record)
@@ -56,7 +62,7 @@ def setup_logger(service_name, branch):
         format=(
             "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | "
             "<level>{level:<7}</level> | "
-            f"{service_name:<16} | "
+            f"{service:<16} | {component:<24} | "
             "order={extra[order_id]} | "
             "msg=\"{message}\" | "
             "meta={extra[meta]}"
@@ -65,18 +71,18 @@ def setup_logger(service_name, branch):
         enqueue=True,
     )
 
-    log_path = LOG_DIR / branch
+    log_path = LOG_DIR / service
     log_path.mkdir(parents=True, exist_ok=True)
-    log_file = log_path / f"{service_name}.log"
+    log_file = log_path / f"{component}.jsonl"
 
     # JSON business log
     logger.add(
-        json_sink, 
+        lambda message: json_sink(str(log_file), message),
         level="INFO",
         enqueue=True,
     )
 
     return logger.bind(
-        service=service_name,
-        _log_file=str(log_file)
+        service=service,
+        component=component,
     )
